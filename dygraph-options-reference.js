@@ -728,7 +728,7 @@ Dygraph.OPTIONS_REFERENCE =  // <JSON>
     "default": "false",
     "labels": ["Interactive Elements"],
     "type": "boolean",
-    "description": "Show the range selector widget. This option can only be specified at Dygraph creation time."
+    "description": "Show or hide the range selector widget."
   },
   "rangeSelectorHeight": {
     "default": "40",
@@ -759,6 +759,18 @@ Dygraph.OPTIONS_REFERENCE =  // <JSON>
     "labels": ["Data Line display"],
     "type": "array or function",
     "description": "A function (or array of functions) which plot each data series on the chart. TODO(danvk): more details! May be set per-series."
+  },
+  "series": {
+    "default": "null",
+    "labels": ["Series"],
+    "type": "Object",
+    "description": "Defines per-series options. Its keys match the y-axis label names, and the values are dictionaries themselves that contain options specific to that series. When this option is missing, it falls back on the old-style of per-series options comingled with global options."
+  },
+  "plugins": {
+    "default": "[]",
+    "labels": ["Configuration"],
+    "type": "Array<plugin>",
+    "description": "Defines per-graph plug-ins. Useful for per-graph customization"
   }
 }
 ;  // </JSON>
@@ -770,7 +782,7 @@ Dygraph.OPTIONS_REFERENCE =  // <JSON>
 // Do a quick sanity check on the options reference.
 (function() {
   "use strict";
-  var warn = function(msg) { if (console) console.warn(msg); };
+  var warn = function(msg) { if (window.console) window.console.warn(msg); };
   var flds = ['type', 'default', 'description'];
   var valid_cats = [
    'Annotations',
@@ -787,9 +799,11 @@ Dygraph.OPTIONS_REFERENCE =  // <JSON>
    'Legend',
    'Overall display',
    'Rolling Averages',
+   'Series',
    'Value display/formatting',
    'Zooming',
    'Debugging',
+   'Configuration',
    'Deprecated'
   ];
   var i;
