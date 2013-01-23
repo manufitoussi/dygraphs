@@ -76,25 +76,34 @@ Dygraph.Interaction.startPan = function(event, g, context) {
   // and could change out from under us during a pan (say if there's a data
   // update).
   context.is2DPan = false;
-  context.axes = [];
-  for (i = 0; i < g.axes_.length; i++) {
-    axis = g.axes_[i];
-    var axis_data = {};
-    var yRange = g.yAxisRange(i);
-    // TODO(konigsberg): These values should be in |context|.
-    // In log scale, initialTopValue, dragValueRange and unitsPerPixel are log scale.
-    if (axis.logscale) {
-      axis_data.initialTopValue = Dygraph.log10(yRange[1]);
-      axis_data.dragValueRange = Dygraph.log10(yRange[1]) - Dygraph.log10(yRange[0]);
-    } else {
-      axis_data.initialTopValue = yRange[1];
-      axis_data.dragValueRange = yRange[1] - yRange[0];
-    }
-    axis_data.unitsPerPixel = axis_data.dragValueRange / (g.plotter_.area.h - 1);
-    context.axes.push(axis_data);
 
-    // While calculating axes, set 2dpan.
-    if (axis.valueWindow || axis.valueRange) context.is2DPan = true;
+
+  // [WIT] allow2DPan:
+  if (g.getOption('allow2DPan')) {
+    context.axes = [];
+    for (i = 0; i < g.axes_.length; i++) {
+      axis = g.axes_[i];
+      var axis_data = {};
+      var yRange = g.yAxisRange(i);
+      // TODO(konigsberg): These values should be in |context|.
+      // In log scale, initialTopValue, dragValueRange and unitsPerPixel are log scale.
+      if (axis.logscale) {
+        axis_data.initialTopValue = Dygraph.log10(yRange[1]);
+        axis_data.dragValueRange = Dygraph.log10(yRange[1]) - Dygraph.log10(yRange[0]);
+      } else {
+
+        // [WIT] fix drag gap:
+        axis_data.initialTopValue = g.parseFloat_(yRange[1]);
+        axis_data.dragValueRange = g.parseFloat_(yRange[1]) - g.parseFloat_(yRange[0]);
+        //axis_data.initialTopValue = yRange[1];
+        //axis_data.dragValueRange = yRange[1] - yRange[0];
+      }
+      axis_data.unitsPerPixel = axis_data.dragValueRange / (g.plotter_.area.h - 1);
+      context.axes.push(axis_data);
+
+      // While calculating axes, set 2dpan.
+      if (axis.valueWindow || axis.valueRange) context.is2DPan = true;
+    }
   }
 };
 
@@ -182,6 +191,9 @@ Dygraph.Interaction.movePan = function(event, g, context) {
  * dragStartX/dragStartY/etc. properties). This function modifies the context.
  */
 Dygraph.Interaction.endPan = function(event, g, context) {
+  // [WIT] pan callback:
+  var panCallback = g.attr_('panCallback');
+
   context.dragEndX = g.dragGetX_(event, context);
   context.dragEndY = g.dragGetY_(event, context);
 
@@ -203,6 +215,11 @@ Dygraph.Interaction.endPan = function(event, g, context) {
   context.boundedDates = null;
   context.boundedValues = null;
   context.axes = null;
+
+  // [WIT] trigger pan callback:
+  if (panCallback && (regionWidth >= 2 || regionHeight >= 2)) {
+    panCallback(event, g.lastx_, g.lasty_);
+  }
 };
 
 /**
@@ -485,9 +502,15 @@ Dygraph.Interaction.moveTouch = function(event, g, context) {
  * @private
  */
 Dygraph.Interaction.endTouch = function(event, g, context) {
+  // [WIT] pan callback:
+  var panCallback = g.attr_('panCallback');
+
   if (event.touches.length !== 0) {
     // this is effectively a "reset"
     Dygraph.Interaction.startTouch(event, g, context);
+  } else if (panCallback) {
+    // [WIT] Trigger pan callback
+    panCallback(event, g.lastx_, g.lasty_);
   }
 };
 
