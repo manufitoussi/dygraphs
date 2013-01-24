@@ -53,12 +53,13 @@ DygraphLayout.prototype.addDataset = function(setname, set_xy) {
 };
 
 DygraphLayout.prototype.getPlotArea = function() {
-  return this.computePlotArea_();
+  return this.area_;
 };
 
 // Compute the box which the chart should be drawn in. This is the canvas's
 // box, less space needed for axis and chart labels.
-DygraphLayout.prototype.computePlotArea_ = function() {
+// NOTE: This should only be called by Dygraph.predraw_().
+DygraphLayout.prototype.computePlotArea = function() {
   var area = {
     // TODO(danvk): per-axis setting.
     x: 0,
@@ -119,12 +120,7 @@ DygraphLayout.prototype.computePlotArea_ = function() {
   };
   this.dygraph_.cascadeEvents_('layout', e);
 
-  // Add space for range selector, if needed.
-  if (this.attr_('showRangeSelector')) {
-    area.h -= this.attr_('rangeSelectorHeight') + 4;
-  }
-
-  return area;
+  this.area_ = area;
 };
 
 DygraphLayout.prototype.setAnnotations = function(ann) {
@@ -210,8 +206,8 @@ DygraphLayout.prototype._evaluateLimits = function() {
   }
 };
 
-DygraphLayout._calcYNormal = function(axis, value) {
-  if (axis.logscale) {
+DygraphLayout._calcYNormal = function(axis, value, logscale) {
+  if (logscale) {
     return 1.0 - ((Dygraph.log10(value) - Dygraph.log10(axis.minyval)) * axis.ylogscale);
   } else {
     return 1.0 - ((value - axis.minyval) * axis.yscale);
@@ -232,6 +228,8 @@ DygraphLayout.prototype._evaluateLineCharts = function() {
     var dataset = this.datasets[setIdx];
     var setName = this.setNames[setIdx];
     var axis = this.dygraph_.axisPropertiesForSeries(setName);
+    // TODO (konigsberg): use optionsForAxis instead.
+    var logscale = this.dygraph_.attributes_.getForSeries("logscale", setName);
 
     // Preallocating the size of points reduces reallocations, and therefore,
     // calls to collect garbage.
@@ -245,7 +243,7 @@ DygraphLayout.prototype._evaluateLineCharts = function() {
       // Range from 0-1 where 0 represents left and 1 represents right.
       var xNormal = (xValue - this.minxval) * this.xscale;
       // Range from 0-1 where 0 represents top and 1 represents bottom
-      var yNormal = DygraphLayout._calcYNormal(axis, yValue);
+      var yNormal = DygraphLayout._calcYNormal(axis, yValue, logscale);
 
       // TODO(danvk): drop the point in this case, don't null it.
       // The nulls create complexity in DygraphCanvasRenderer._drawSeries.
@@ -314,11 +312,11 @@ DygraphLayout.prototype.evaluateWithError = function() {
   this.evaluate();
 
   // [WIT] witbars
-  var labels = this.attr_('labels');
+  var labels = this.dygraph_.attributes_.labels;
   var anyWitBars = false;
   for (var labelIdx = 0; labelIdx < labels.length; labelIdx++) {
     var label = labels[labelIdx];
-    if (this.dygraph_.attr_('witBars', label)) {
+    if (this.dygraph_.getOption('witBars', label)) {
       anyWitBars = true;
       break;
     }
@@ -334,6 +332,9 @@ DygraphLayout.prototype.evaluateWithError = function() {
     var dataset = this.datasets[setIdx];
     var setName = this.setNames[setIdx];
     var axis = this.dygraph_.axisPropertiesForSeries(setName);
+    // TODO (konigsberg): use optionsForAxis instead.
+    var logscale = this.dygraph_.attributes_.getForSeries("logscale", setName);
+
     for (j = 0; j < dataset.length; j++, i++) {
       var item = dataset[j];
       var xv = DygraphLayout.parseFloat_(item[0]);
@@ -346,8 +347,8 @@ DygraphLayout.prototype.evaluateWithError = function() {
 
         var yv_minus = yv - errorMinus;
         var yv_plus = yv + errorPlus;
-        points[j].y_top = DygraphLayout._calcYNormal(axis, yv_minus);
-        points[j].y_bottom = DygraphLayout._calcYNormal(axis, yv_plus);
+        points[j].y_top = DygraphLayout._calcYNormal(axis, yv_minus, logscale);
+        points[j].y_bottom = DygraphLayout._calcYNormal(axis, yv_plus, logscale);
       }
 
       // [WIT] setup point y-values from raw data

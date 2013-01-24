@@ -6,23 +6,25 @@
 # This list needs to be kept in sync w/ the one in dygraph-dev.js
 # and the one in jsTestDriver.conf.
 cat \
+strftime/strftime-min.js \
+rgbcolor/rgbcolor.js \
+stacktrace.js \
+dashed-canvas.js \
+dygraph-options.js \
 dygraph-layout.js \
 dygraph-canvas.js \
 dygraph.js \
 dygraph-utils.js \
 dygraph-gviz.js \
 dygraph-interaction-model.js \
-dygraph-range-selector.js \
 dygraph-tickers.js \
-rgbcolor/rgbcolor.js \
-strftime/strftime-min.js \
-dashed-canvas.js \
 plugins/base.js \
 plugins/annotations.js \
 plugins/axes.js \
 plugins/chart-labels.js \
 plugins/grid.js \
 plugins/legend.js \
+plugins/range-selector.js \
 plugins/install.js \
 | perl -ne 'print unless m,REMOVE_FOR_COMBINED,..m,/REMOVE_FOR_COMBINED,' \
 > /tmp/dygraph.js

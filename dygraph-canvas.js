@@ -25,7 +25,7 @@
  */
 
 /*jshint globalstrict: true */
-/*global Dygraph:false,RGBColor:false */
+/*global Dygraph:false,RGBColorParser:false */
 "use strict";
 
 
@@ -343,7 +343,7 @@ DygraphCanvasRenderer._drawSeries = function(e,
       isIsolated = false;
       if (drawGapPoints || !prevCanvasX) {
         iter.nextIdx_ = i;
-        var peek = iter.next();
+        iter.next();
         nextCanvasY = iter.hasNext ? iter.peek.canvasy : null;
 
         var isNextCanvasYNullOrNaN = nextCanvasY === null ||
@@ -452,13 +452,10 @@ DygraphCanvasRenderer.prototype._updatePoints = function() {
  */
 DygraphCanvasRenderer.prototype._renderLineChart = function(opt_seriesName, opt_ctx) {
   var ctx = opt_ctx || this.elementContext;
-  var errorBars = this.attr_("errorBars") || this.attr_("customBars");
-  var fillGraph = this.attr_("fillGraph");
   var i;
 
   var sets = this.layout.points;
   var setNames = this.layout.setNames;
-  var setCount = setNames.length;
   var setName;
 
   this.colors = this.dygraph_.colorsMap_;
@@ -603,7 +600,6 @@ DygraphCanvasRenderer._errorPlotter = function(e) {
   var color = e.color;
   var fillAlpha = g.getOption('fillAlpha', setName);
   var stepPlot = g.getOption('stepPlot');  // TODO(danvk): per-series
-  var axis = e.axis;
   var points = e.points;
 
   var iter = Dygraph.createIterator(points, 0, points.length,
@@ -616,9 +612,8 @@ DygraphCanvasRenderer._errorPlotter = function(e) {
   var prevX = NaN;
   var prevY = NaN;
   var prevYs = [-1, -1];
-  var yscale = axis.yscale;
   // should be same color as the lines but only 15% opaque.
-  var rgb = new RGBColor(color);
+  var rgb = new RGBColorParser(color);
   var err_color =
       'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + fillAlpha + ')';
   ctx.fillStyle = err_color;
@@ -732,9 +727,8 @@ DygraphCanvasRenderer._fillPlotter = function(e) {
     var prevX = NaN;
     var prevYs = [-1, -1];
     var newYs;
-    var yscale = axis.yscale;
     // should be same color as the lines but only 15% opaque.
-    var rgb = new RGBColor(color);
+    var rgb = new RGBColorParser(color);
     var err_color =
         'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + fillAlpha + ')';
     ctx.fillStyle = err_color;
